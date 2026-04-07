@@ -1,0 +1,40 @@
+name: Auto Commit + PR
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+jobs:
+  auto-flow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Make changes
+        run: echo "Updated on $(date)" >> log.txt
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git checkout -b auto-branch-$(date +%s)
+          git add .
+          git commit -m "Auto commit"
+          git push origin HEAD
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "Auto PR"
+          body: "Automated PR"
+
+      - name: Install GitHub CLI
+        run: sudo apt install gh -y
+
+      - name: Merge PR
+        run: gh pr merge --auto --merge
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
